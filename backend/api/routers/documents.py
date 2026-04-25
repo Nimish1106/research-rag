@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import Optional
@@ -60,8 +59,8 @@ async def get_figure(
     
     if not chunk or not chunk.image_path:
         raise HTTPException(status_code=404, detail="Figure not found")
-    
-    return FileResponse(chunk.image_path)
+
+    return file_store.get_figure_response(chunk.image_path)
 
 @router.delete("/{document_id}")
 async def delete_document(document_id: UUID, db: Session = Depends(get_db)):

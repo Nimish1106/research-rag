@@ -200,7 +200,29 @@ EMBEDDING_DEVICE=cpu  # or 'cuda' for GPU
 # Retrieval
 TOP_K_VECTOR=10
 TOP_K_GRAPH=5
+
+# Storage Backend (for deployment)
+# Use 'local' for development, 's3' for cloud object storage
+STORAGE_BACKEND=local
+
+# Free-tier friendly option: Cloudflare R2 (S3-compatible)
+STORAGE_BUCKET=research-rag
+STORAGE_REGION=auto
+STORAGE_ENDPOINT_URL=
+STORAGE_ACCESS_KEY_ID=
+STORAGE_SECRET_ACCESS_KEY=
+STORAGE_FORCE_PATH_STYLE=true
+STORAGE_PREFIX=research-rag
 ```
+
+### Free Resources Recommendation
+
+For a no-cost starter deployment:
+
+- Frontend: Vercel hobby tier
+- PostgreSQL: Neon/Supabase free tier
+- Vector DB: Qdrant Cloud free tier
+- Object storage: Cloudflare R2 free tier (S3-compatible)
 
 ---
 

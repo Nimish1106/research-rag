@@ -4,12 +4,11 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import Optional, Dict, Any, List
 import re
-from pathlib import Path
-from PIL import Image, UnidentifiedImageError
 from db.database import get_db
 from db.models import Document, Conversation, Message
 from api.models.request_models import QueryRequest
 from api.models.response_models import QueryResponse, Evidence
+from file_storage.file_store import FileStore
 from retrieval.vector_search import VectorSearch
 from retrieval.graph_search import GraphSearch
 from retrieval.hybrid_ranker import HybridRanker
@@ -18,6 +17,7 @@ from generation.answer_generator import AnswerGenerator
 from config import get_settings
 
 router = APIRouter(prefix="/api/query", tags=["query"])
+file_store = FileStore()
 
 
 def _contains_reference(text: str, label: str, number: str) -> bool:
@@ -75,35 +75,7 @@ def _apply_reference_aware_ranking(
 
 def _is_usable_figure_image(image_path: Optional[str]) -> bool:
     """Filter out invalid or mostly-black figure artifacts for cleaner UI evidence."""
-    if not image_path:
-        return False
-
-    path = Path(image_path)
-    if not path.exists() or not path.is_file():
-        return False
-
-    try:
-        with Image.open(path) as img:
-            gray = img.convert("L")
-            stat = gray.getextrema()
-            if not stat:
-                return False
-
-            min_px, max_px = stat
-            if max_px <= 8:
-                return False
-
-            histogram = gray.histogram()
-            total = sum(histogram) or 1
-            very_dark = sum(histogram[:8])
-            dark_ratio = very_dark / total
-
-            if dark_ratio > 0.985:
-                return False
-
-            return True
-    except (OSError, UnidentifiedImageError, ValueError):
-        return False
+    return file_store.is_usable_image(image_path or "")
 
 @router.post("/ask", response_model=QueryResponse)
 async def ask_question(

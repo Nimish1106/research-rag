@@ -87,7 +87,7 @@ export default function EvidencePane({ evidence }: EvidencePaneProps) {
   }
 
   return (
-    <div className="card-base max-h-[calc(100vh-400px)] flex flex-col shadow-medium overflow-hidden">
+    <div className="card-base h-[420px] xl:h-full flex flex-col shadow-medium overflow-hidden">
       <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-transparent sticky top-0">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-blue-100 rounded-lg flex items-center justify-center">

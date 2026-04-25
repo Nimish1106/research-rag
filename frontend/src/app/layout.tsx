@@ -26,10 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body
-        className={`${jakarta.variable} ${spaceGrotesk.variable} antialiased`}
-        style={{ fontFamily: 'var(--font-jakarta), ui-sans-serif, system-ui' }}
-      >
+      <body className={`${jakarta.variable} ${spaceGrotesk.variable} font-body antialiased`}>
         <div className="app-shell">
           {children}
         </div>

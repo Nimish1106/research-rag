@@ -191,12 +191,13 @@ export default function ChatPanel({ document, onAnswerReceived }: ChatPanelProps
     <div className="flex flex-col h-full bg-white">
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
-        <div className="flex items-center gap-2 pb-2">
+        <div className="sticky top-0 z-10 -mx-6 border-b border-slate-100 bg-white/90 px-6 pb-3 pt-1 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
           <select
             value={conversationId || ''}
             onChange={(e) => handleSelectConversation(e.target.value)}
             aria-label="Conversation history"
-            className="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700"
+            className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700"
           >
             <option value="">Current draft chat</option>
             {conversations.map((conversation) => (
@@ -208,11 +209,12 @@ export default function ChatPanel({ document, onAnswerReceived }: ChatPanelProps
           <button
             type="button"
             onClick={handleNewChat}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-slate-300 bg-white text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50"
+            className="btn-secondary whitespace-nowrap px-3 py-2"
           >
             <MessageSquarePlus className="w-4 h-4" />
             New chat
           </button>
+          </div>
         </div>
 
         {messages.length === 0 && (
@@ -268,7 +270,7 @@ export default function ChatPanel({ document, onAnswerReceived }: ChatPanelProps
             )}
             
             <div
-              className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-3 rounded-lg transition-all ${
+              className={`max-w-[82%] rounded-2xl px-4 py-3 transition-all lg:max-w-[78%] xl:max-w-[74%] ${
                 msg.role === 'user'
                   ? 'bg-primary-500 text-white rounded-br-none'
                   : `bg-slate-100 text-slate-900 rounded-bl-none border-2 ${

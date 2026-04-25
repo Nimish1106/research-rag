@@ -56,10 +56,7 @@ export default function Home() {
               <FileText className="h-6 w-6" />
             </div>
             <div>
-              <h1
-                className="text-xl font-bold sm:text-2xl"
-                style={{ fontFamily: 'var(--font-space-grotesk), var(--font-jakarta), sans-serif' }}
-              >
+              <h1 className="font-display text-xl font-bold sm:text-2xl">
                 Research RAG
               </h1>
               <p className="text-xs font-medium text-slate-500">Document Intelligence Workspace</p>
@@ -146,7 +143,7 @@ export default function Home() {
             {currentAnswer?.evidence?.length ? (
               <EvidencePane evidence={currentAnswer.evidence} />
             ) : (
-              <div className="card-base p-6 xl:h-[calc(100vh-255px)]">
+              <div className="card-base min-h-[280px] p-6 xl:h-[calc(100vh-255px)]">
                 <p className="panel-title">Evidence</p>
                 <div className="mt-8 text-center text-slate-500">
                   <Sparkles className="mx-auto mb-3 h-10 w-10 text-slate-300" />

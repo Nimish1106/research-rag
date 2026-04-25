@@ -36,6 +36,14 @@
 }
 
 @layer components {
+  .font-display {
+    font-family: var(--font-space-grotesk), var(--font-jakarta), ui-sans-serif, system-ui;
+  }
+
+  .font-body {
+    font-family: var(--font-jakarta), ui-sans-serif, system-ui;
+  }
+
   .app-shell {
     @apply min-h-screen text-slate-900;
   }
