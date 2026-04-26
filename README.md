@@ -384,25 +384,37 @@ curl http://localhost:8000/api/query/conversations/{conversation_id}
 
 ### Automated Evaluation
 
-Run the evaluation script to measure retrieval quality and answer accuracy:
+Run the evaluation script to measure QA quality and ingestion speed.
 
 ```bash
-# From project root
-python evaluation/evaluate.py --dataset evaluation/eval_dataset.json
+py evaluation/evaluate.py
 ```
 
-**Output Metrics:**
+### Current Evaluation Snapshot
 
-```json
-{
-  "num_examples": 10,
-  "num_successful": 9,
-  "avg_latency_sec": 4.2,
-  "avg_answer_term_match": 0.82,
-  "avg_evidence_page_precision": 0.78,
-  "avg_evidence_type_precision": 0.85
-}
+| Metric | Value |
+|---|---:|
+| QA dataset PDFs | `rag-anything.pdf`, `926_revised paper pdf.pdf`, `Report_MotorSense_ML_ (1).pdf` |
+| QA examples | `6` |
+| QA success rate | `6/6` |
+| QA avg latency | `7.0s` |
+| QA avg answer term match | `0.945` |
+| QA avg evidence page precision | `0.604` |
+| QA avg evidence type precision | `0.979` |
+| Ingestion PDFs | `3dc7a542-9cc1-4844-a6fa-e88eab16236d.pdf`, `7df3a18c-63bf-4577-a2f6-8010ef19b2e2.pdf`, `b7a30f54-d2ed-4a3c-be57-e1e82161b433.pdf` |
+| Ingestion avg processing time | `257.29s` |
+| Ingestion min processing time | `162.58s` |
+| Ingestion max processing time | `355.99s` |
+
+```bash
+py evaluation/evaluate.py --mode ingestion --upload-dir path\to\pdfs --poll-interval 2 --ingestion-timeout 1800
 ```
+
+Use `--cleanup-uploaded` to delete uploaded documents after timing.
+
+### Will Results Change on a Better Laptop?
+
+Yes. Stronger hardware mainly improves ingestion and local-processing time. If you keep the same PDFs, `.env`, provider, and evaluation dataset, retrieval quality should stay broadly comparable, while latency and processing duration usually improve.
 
 ### Manual Testing Checklist
 
