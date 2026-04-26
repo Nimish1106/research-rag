@@ -25,7 +25,6 @@ class IngestionPipeline:
     
     def process_document(self, document_id: str) -> bool:
         """Process a single document through the complete pipeline."""
-        processing_pdf_path = None
         try:
             # Get document from DB
             document = self.db.query(Document).filter(Document.id == document_id).first()
@@ -36,21 +35,18 @@ class IngestionPipeline:
             document.status = "processing"
             self.db.commit()
             
-            processing_pdf_path = self.file_store.resolve_pdf_for_processing(
-                document.file_path,
-                str(document_id)
-            )
+            pdf_path = document.file_path
             
             # Step 1: Extract text blocks
             print(f"[1/10] Extracting text blocks...")
-            parser = PDFParser(processing_pdf_path)
+            parser = PDFParser(pdf_path)
             text_blocks = parser.extract_text_blocks()
             page_count = parser.page_count
             parser.close()
             
             # Step 2: OCR fallback for low-text pages
             print(f"[2/10] Performing OCR fallback...")
-            ocr = OCRFallback(processing_pdf_path)
+            ocr = OCRFallback(pdf_path)
             for page_num in range(page_count):
                 if ocr.needs_ocr(page_num):
                     ocr_blocks = ocr.ocr_page(page_num)
@@ -64,13 +60,13 @@ class IngestionPipeline:
             
             # Step 4: Extract figures
             print(f"[4/10] Extracting figures...")
-            fig_extractor = FigureExtractor(processing_pdf_path, str(document_id))
+            fig_extractor = FigureExtractor(pdf_path, str(document_id))
             figures = fig_extractor.extract_figures()
             fig_extractor.close()
             
             # Step 5: Extract tables
             print(f"[5/10] Extracting tables...")
-            table_extractor = TableExtractor(processing_pdf_path)
+            table_extractor = TableExtractor(pdf_path)
             tables = table_extractor.extract_tables()
             table_extractor.close()
             
@@ -161,8 +157,6 @@ class IngestionPipeline:
                 self.db.commit()
             
             return False
-        finally:
-            self.file_store.cleanup_processing_cache(str(document_id))
     
     def _create_chunks(
         self,

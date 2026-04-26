@@ -1,7 +1,8 @@
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from PIL import Image, UnidentifiedImageError
 
 from config import get_settings
-from file_storage.file_store import FileStore
 from llm.base_client import LLMClient
 from llm.ollama_client import OllamaClient
 
@@ -10,7 +11,6 @@ class AnswerGenerator:
 
     def __init__(self):
         self.settings = get_settings()
-        self.file_store = FileStore()
         self.llm_client, self.client_error = self._build_client()
 
     def _build_client(self) -> Tuple[Optional[LLMClient], Optional[str]]:
@@ -149,12 +149,34 @@ class AnswerGenerator:
     def _collect_image_paths(self, figure_evidence: List[Dict]) -> List[str]:
         image_paths: List[str] = []
         for fig in figure_evidence[:3]:
-            image_ref = fig.get("image_path")
-            cache_hint = str(fig.get("chunk_id") or f"fig_{fig.get('page_number', 'unknown')}")
-            local_path = self.file_store.ensure_local_image_for_llm(image_ref, cache_hint)
-            if local_path:
-                image_paths.append(local_path)
+            path = fig.get("image_path")
+            if path and Path(path).exists():
+                image_paths.append(path)
         return image_paths
 
     def _is_usable_image(self, image_path: Optional[str]) -> bool:
-        return self.file_store.is_usable_image(image_path or "")
+        if not image_path:
+            return False
+
+        path = Path(image_path)
+        if not path.exists() or not path.is_file():
+            return False
+
+        try:
+            with Image.open(path) as img:
+                gray = img.convert("L")
+                extrema = gray.getextrema()
+                if not extrema:
+                    return False
+
+                _, max_px = extrema
+                if max_px <= 8:
+                    return False
+
+                histogram = gray.histogram()
+                total = sum(histogram) or 1
+                dark_ratio = sum(histogram[:8]) / total
+
+                return dark_ratio <= 0.985
+        except (OSError, UnidentifiedImageError, ValueError):
+            return False

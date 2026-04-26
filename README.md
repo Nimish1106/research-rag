@@ -1,297 +1,329 @@
+# Research RAG
 
-# Research RAG - Diagram & Chart Understanding System
+Production-grade multimodal RAG for research papers.
 
-A **completely free, local-first** RAG system for research papers that understands text, figures, tables, and equations.
+Research RAG ingests PDFs, extracts text and visual signals (figures, tables, equations), builds structured context, and provides grounded answers with evidence.
 
-![Status](https://img.shields.io/badge/status-stable-green)
-![Stack](https://img.shields.io/badge/stack-100%25%20free-blue)
-![License](https://img.shields.io/badge/license-MIT-orange)
+## What Is Included Today
 
----
+- Multimodal ingestion pipeline for PDF content
+- Figure, table, equation, caption, and text chunk handling
+- Hybrid retrieval (vector + graph expansion + ranking)
+- Evidence-first responses with per-source relevance scores
+- Conversation-aware chat per document
+- Conversation history APIs (latest + full list)
+- Figure reference-aware ranking (for prompts like "Figure 1")
+- Invalid/black image filtering before evidence rendering
+- Docker Compose deployment for frontend, backend, PostgreSQL, and Qdrant
+- Optional Ollama service profile
 
-## 🎯 Features
+## Architecture
 
-- **Multimodal Understanding**: Extracts and understands text, figures, tables, and equations
-- **Knowledge Graph**: Builds document structure with captions, sections, and references
-- **Hybrid Retrieval**: Combines vector similarity + graph traversal
-- **Vision Language Model**: Analyzes charts and diagrams using LLaVA
-- **100% Free**: No API costs, runs entirely on your hardware
-- **Production-Ready**: Docker Compose orchestration, type-safe APIs
+```text
+Frontend (Next.js)
+  -> Upload, document workspace, chat, evidence inspector
 
----
+Backend (FastAPI)
+  -> Ingestion, chunking, graph building, embeddings, retrieval, answer generation
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  Frontend (Next.js + TypeScript)            │
-│     Upload • Document List • Chat • Evidence Display        │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────────┐
-│                  Backend (FastAPI + Python)                 │
-│  PDF Parsing • Graph • Embeddings • Retrieval • Generation  │
-└─────┬──────────┬──────────┬──────────┬──────────────────────┘
-      ▼          ▼          ▼          ▼
-  ┌───────┐  ┌──────┐  ┌───────┐  ┌────────┐
-  │Postgres│  │Qdrant│  │Ollama │  │Storage │
-  └───────┘  └──────┘  └───────┘  └────────┘
+Data and Infra
+  -> PostgreSQL (metadata, chunks, conversations)
+  -> Qdrant (vector index)
+  -> Local storage (pdfs, figures, graphs)
+  -> Optional Ollama profile for local LLM/VLM
 ```
 
-### Technology Stack
+## Tech Stack
 
-| Component | Technology | Why |
-|-----------|-----------|-----|
-| **LLM** | Llama 3.1 8B (Ollama) | Free, local, fast |
-| **VLM** | LLaVA 13B (Ollama) | Free vision understanding |
-| **Embeddings** | bge-m3 | SOTA multilingual, free |
-| **Vector DB** | Qdrant | Best local support |
-| **Graph** | NetworkX | Simple, serializable |
-| **Database** | PostgreSQL | Rock solid |
-| **Backend** | FastAPI | Fast, typed |
-| **Frontend** | Next.js 14 | Modern, typed |
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 14, TypeScript, Tailwind CSS |
+| Backend API | FastAPI, Pydantic |
+| Database | PostgreSQL 15 |
+| Vector DB | Qdrant |
+| Embeddings | BAAI/bge-m3 |
+| LLM Providers | Gemini (default), Ollama (optional profile) |
+| Orchestration | Docker Compose |
 
----
+## Repository Layout
 
-## 🚀 Quick Start
+```text
+research-rag/
+  backend/
+    api/
+      routers/
+      models/
+    chunking/
+    db/
+    embeddings/
+    file_storage/
+    generation/
+    graph/
+    ingestion/
+    llm/
+    retrieval/
+    config.py
+    main.py
+  frontend/
+    src/
+      app/
+      components/
+      lib/
+      types/
+  evaluation/
+    eval_dataset.json
+    evaluate.py
+  storage/
+    pdfs/
+    figures/
+    graphs/
+  docker-compose.yml
+  .env.example
+  setup.sh
+```
 
-### Prerequisites
+## Prerequisites
 
-- Docker & Docker Compose
-- 16GB RAM minimum (32GB recommended for VLM)
-- 20GB free disk space
+- Docker Desktop (or Docker Engine + Compose plugin)
+- At least 16 GB RAM recommended for comfortable local execution
+- Sufficient free disk for model/cache and extracted assets
 
-### Installation
+## Configuration
+
+Create `.env` from `.env.example` and update values as needed.
+
+Minimum required runtime settings:
+
+```env
+# Database
+POSTGRES_DB=research_rag
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+
+# Backend
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/research_rag
+
+# LLM provider
+LLM_PROVIDER=gemini
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-1.5-flash
+GEMINI_TIMEOUT_SECONDS=120
+
+# Retrieval
+TOP_K_VECTOR=10
+TOP_K_GRAPH=5
+```
+
+Important:
+- `GEMINI_TIMEOUT_SECONDS` must be a valid integer (do not leave empty).
+- If `LLM_PROVIDER=ollama`, ensure Ollama is running and models are pulled.
+
+## Quick Start (Docker)
+
+1. Build and start the full stack:
 
 ```bash
-# Clone repository
-git clone <your-repo-url>
-cd research-rag
-
-# Create environment file
-cp .env.example .env
-
-# Start all services
-docker-compose up --build
+docker compose up -d --build
 ```
 
-### First Run
+2. Verify services:
 
 ```bash
-# Pull Ollama models (one-time, ~8GB download)
-docker exec research-rag-ollama ollama pull llama3.1:8b
+docker compose ps
+```
+
+3. Open applications:
+- Frontend: http://localhost:3000
+- Backend OpenAPI: http://localhost:8000/docs
+- Health endpoint: http://localhost:8000/api/health
+- Qdrant: http://localhost:6333
+
+## Optional: Run Ollama Profile
+
+Ollama is not started by default.
+
+1. Start Ollama service:
+
+```bash
+docker compose --profile ollama up -d ollama
+```
+
+2. Pull models:
+
+```bash
+docker exec research-rag-ollama ollama pull llama3.2:3b
 docker exec research-rag-ollama ollama pull llava:13b
-
-# Verify services
-./scripts/validate.sh
 ```
 
-### Access
+3. Switch provider in `.env`:
 
-- **Frontend**: http://localhost:3000
-- **API Docs**: http://localhost:8000/docs
-- **Qdrant Dashboard**: http://localhost:6333/dashboard
+```env
+LLM_PROVIDER=ollama
+```
 
----
+Then restart backend:
 
-## 📖 Usage
+```bash
+docker compose restart backend
+```
 
-### 1. Upload a PDF
+## API Overview
+
+Base URL: `http://localhost:8000/api`
+
+### Ingestion
+
+- `POST /ingest/upload`
+  - Upload PDF and start background processing
+- `GET /ingest/status/{document_id}`
+  - Poll ingestion status (`pending`, `processing`, `ready`, `failed`)
+
+### Documents
+
+- `GET /documents`
+  - List all documents
+- `GET /documents/{document_id}`
+  - Get single document
+- `GET /documents/{document_id}/chunks`
+  - Optional filters: `chunk_type`, `page`
+- `GET /documents/{document_id}/figure/{chunk_id}`
+  - Fetch figure image for evidence rendering
+- `DELETE /documents/{document_id}`
+  - Delete document and cascaded data
+
+### Query and Conversations
+
+- `POST /query/ask`
+  - Ask grounded question for a document
+  - Supports continuing an existing conversation via `conversation_id`
+- `GET /query/conversations/{conversation_id}`
+  - Full message history for one conversation
+- `GET /query/documents/{document_id}/latest-conversation`
+  - Most recent conversation for a document
+- `GET /query/documents/{document_id}/conversations`
+  - All conversation summaries for a document (newest first)
+
+## Example API Requests
+
+Upload PDF:
 
 ```bash
 curl -X POST http://localhost:8000/api/ingest/upload \
   -F "file=@paper.pdf"
 ```
 
-### 2. Wait for Processing
+Ask question (new conversation):
 
-Processing includes:
-- Text extraction (PyMuPDF)
-- OCR fallback (Tesseract)
-- Figure extraction
-- Table extraction
-- Equation detection
-- Caption linking
-- Section detection
-- Knowledge graph construction
-- Vector embedding
-
-Status: `pending` → `processing` → `ready`
-
-### 3. Ask Questions
-
-**Via UI**: Open http://localhost:3000
-
-**Via API**:
 ```bash
 curl -X POST http://localhost:8000/api/query/ask \
   -H "Content-Type: application/json" \
   -d '{
-    "document_id": "<uuid>",
-    "question": "What does Figure 1 show?"
+    "document_id": "<document-uuid>",
+    "question": "Describe Figure 1"
   }'
 ```
 
----
-
-## 📂 Project Structure
-
-```
-research-rag/
-├── backend/
-│   ├── api/              # FastAPI routes
-│   ├── db/               # Database models
-│   ├── ingestion/        # PDF parsing pipeline
-│   ├── chunking/         # Chunk normalization
-│   ├── graph/            # Knowledge graph
-│   ├── embeddings/       # bge-m3 wrapper
-│   ├── retrieval/        # Vector + graph search
-│   ├── generation/       # LLM answer generation
-│   ├── llm/              # Ollama client
-│   ├── storage/          # File management
-│   └── tests/            # Unit tests
-├── frontend/
-│   └── src/
-│       ├── app/          # Next.js pages
-│       ├── components/   # React components
-│       ├── lib/          # API client
-│       └── types/        # TypeScript types
-├── evaluation/
-│   ├── eval_dataset.sample.json
-│   └── evaluate.py
-├── storage/              # Runtime data (git-ignored)
-├── scripts/              # Helper scripts
-├── docker-compose.yml
-└── README.md
-```
-
----
-
-## 🧪 Testing
-
-### Backend Tests
+Ask question (existing conversation):
 
 ```bash
-cd backend
-pytest
+curl -X POST http://localhost:8000/api/query/ask \
+  -H "Content-Type: application/json" \
+  -d '{
+    "document_id": "<document-uuid>",
+    "conversation_id": "<conversation-uuid>",
+    "question": "Now compare it with Figure 2"
+  }'
 ```
 
-### End-to-End Evaluation
+## Frontend Behavior
+
+Current UI behavior includes:
+- Product-style workspace shell
+- Left panel: upload and document list
+- Center panel: chat with conversation selector and "New chat"
+- Right panel: evidence inspector for selected assistant response
+- Graceful fallback when evidence image preview fails
+
+## Operational Runbooks
+
+### Restart all services
+
+```bash
+docker compose restart
+```
+
+### Clean data reset (fresh start)
+
+Use this when local files are removed manually and indexes/state drift:
+
+```bash
+# 1) Clear relational data
+docker exec research-rag-postgres psql -U postgres -d research_rag -c "TRUNCATE TABLE conversations CASCADE; TRUNCATE TABLE messages CASCADE; TRUNCATE TABLE chunks CASCADE; TRUNCATE TABLE documents CASCADE;"
+
+# 2) Clear local storage assets
+# Windows PowerShell
+Remove-Item -Path .\storage\* -Recurse -Force -ErrorAction SilentlyContinue
+
+# 3) Recreate running services cleanly
+docker compose up -d
+```
+
+### Check health quickly
+
+```bash
+docker compose ps
+curl http://localhost:8000/api/health
+curl http://localhost:8000/api/documents
+```
+
+## Troubleshooting
+
+### Backend fails with `gemini_timeout_seconds` validation error
+
+Cause:
+- `GEMINI_TIMEOUT_SECONDS` is empty or non-integer in `.env`.
+
+Fix:
+- Set a valid integer, for example:
+
+```env
+GEMINI_TIMEOUT_SECONDS=120
+```
+
+Then restart backend:
+
+```bash
+docker compose restart backend
+```
+
+### Backend starts but answers fail
+
+Checks:
+- `LLM_PROVIDER` is set correctly
+- For Gemini: `GEMINI_API_KEY` exists
+- For Ollama: service is running and models are available
+
+### No documents shown in frontend
+
+Checks:
+- Backend up on port 8000
+- Frontend up on port 3000
+- `GET /api/documents` returns JSON
+
+## Development Notes
+
+- Backend source is mounted into container during local Docker runs.
+- Frontend builds with `NEXT_PUBLIC_API_URL=http://backend:8000/api` in container.
+- Persistent runtime data lives under `storage/` and PostgreSQL/Qdrant volumes.
+
+## Evaluation
+
+Run evaluation script from repository root:
 
 ```bash
 python evaluation/evaluate.py
 ```
 
----
+## License
 
-## 🔧 Configuration
-
-All settings in `.env`:
-
-```bash
-# Ollama Models
-OLLAMA_LLM_MODEL=llama3.1:8b
-OLLAMA_VLM_MODEL=llava:13b
-
-# Embeddings
-EMBEDDING_MODEL=BAAI/bge-m3
-EMBEDDING_DEVICE=cpu  # or 'cuda' for GPU
-
-# Retrieval
-TOP_K_VECTOR=10
-TOP_K_GRAPH=5
-
-# Storage Backend (for deployment)
-# Use 'local' for development, 's3' for cloud object storage
-STORAGE_BACKEND=local
-
-# Free-tier friendly option: Cloudflare R2 (S3-compatible)
-STORAGE_BUCKET=research-rag
-STORAGE_REGION=auto
-STORAGE_ENDPOINT_URL=
-STORAGE_ACCESS_KEY_ID=
-STORAGE_SECRET_ACCESS_KEY=
-STORAGE_FORCE_PATH_STYLE=true
-STORAGE_PREFIX=research-rag
-```
-
-### Free Resources Recommendation
-
-For a no-cost starter deployment:
-
-- Frontend: Vercel hobby tier
-- PostgreSQL: Neon/Supabase free tier
-- Vector DB: Qdrant Cloud free tier
-- Object storage: Cloudflare R2 free tier (S3-compatible)
-
----
-
-## 📊 Performance
-
-Tested on sample research papers:
-
-| Metric | Value |
-|--------|-------|
-| Ingestion speed | ~30 sec/page |
-| Query latency | 3-8 seconds |
-| Answer term match | 85% |
-| Evidence precision | 78% |
-| Memory usage | ~8GB (CPU), ~12GB (GPU) |
-
----
-
-## 🐛 Troubleshooting
-
-See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-
-Common issues:
-- Ollama models not found → Run pull commands
-- Out of memory → Reduce batch size or use smaller models
-- Slow queries → Enable GPU for embeddings
-
----
-
-## 🗺️ Roadmap
-
-- [ ] Multi-document chat
-- [ ] Equation rendering in UI
-- [ ] PDF page preview
-- [ ] Export conversation to Markdown
-- [ ] Custom embedding model support
-- [ ] Graph visualization
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! Please:
-1. Fork the repo
-2. Create a feature branch
-3. Add tests
-4. Submit PR
-
----
-
-## 📄 License
-
-MIT License - see LICENSE file
-
----
-
-## 🙏 Acknowledgments
-
-- **Ollama** for local LLM inference
-- **Qdrant** for vector search
-- **BGE** team for embeddings
-- **PyMuPDF** and **pdfplumber** for PDF parsing
-
----
-
-## 📧 Contact
-
-Issues: [GitHub Issues](https://github.com/your-repo/issues)
-
----
-
-**Built with ❤️ using only free, open-source tools**
-```
+MIT

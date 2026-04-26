@@ -21,16 +21,7 @@ class Settings(BaseSettings):
     gemini_timeout_seconds: int = 120
     
     # Storage
-    storage_backend: str = "local"  # local | s3
     storage_path: str = "./storage"
-    storage_bucket: str = ""
-    storage_region: str = "auto"
-    storage_endpoint_url: str = ""
-    storage_access_key_id: str = ""
-    storage_secret_access_key: str = ""
-    storage_force_path_style: bool = True
-    storage_prefix: str = "research-rag"
-    storage_cache_path: str = "./storage/cache"
     
     # Embedding
     embedding_model: str = "BAAI/bge-m3"
@@ -47,9 +38,6 @@ class Settings(BaseSettings):
     rerank_top_k: int = 8
     max_evidence_per_answer: int = 8
     min_evidence_relevance: float = 0.35
-
-    # API / CORS
-    cors_origins: str = "http://localhost:3000"
     
     class Config:
         env_file = ".env"
